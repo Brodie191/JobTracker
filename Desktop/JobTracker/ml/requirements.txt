@@ -1,0 +1,7 @@
+anthropic
+transformers
+torch
+datasets
+evaluate
+seqeval
+modal
