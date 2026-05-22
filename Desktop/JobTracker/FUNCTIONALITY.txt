@@ -1,0 +1,145 @@
+JOB TRACKER - WHAT IT DOES
+============================
+
+
+AUTH
+----
+Sign up and log in with email and password. Every page is protected so
+if you're not logged in you get sent to the login page. Supabase handles
+all the auth stuff including email confirmation.
+
+
+APPLICATIONS  (/applications)
+------------------------------
+Table view of all my job applications. I can add a new one through a
+dialog - company, role, status, date I applied, location, salary range,
+job URL and notes. Clicking a row opens the edit dialog with everything
+pre-filled. Each row has a dropdown with edit and delete options. Delete
+asks for confirmation before doing anything. If I saved a job URL it opens
+in a new tab. Shows a count of how many applications I have and a proper
+empty state if there are none.
+
+
+BOARD  (/board)
+----------------
+Kanban view with four columns - Applied, Interviewing, Offer, Rejected.
+I can drag cards between columns and the position saves. It updates the
+card instantly and rolls back if something goes wrong on the server side.
+Empty states for columns and for when there are no applications at all.
+
+
+ANALYTICS  (/analytics)
+------------------------
+Dashboard that answers five questions about my job search. Shows total
+applications, how many are active in the pipeline, how many offers I've
+got, and my response rate as a header row. Below that is a line chart
+of applications per week over the last 12 weeks. Then a funnel showing
+how many are at each stage as proportional bars, and a timing section
+showing average days from applied to interviewing and from interviewing
+to offer. Shows a clean empty state if there are no applications yet.
+All the number crunching happens in Postgres via a view and two functions,
+not in the app code.
+
+
+SETTINGS  (/settings)
+----------------------
+Profile section to update my display name. Email is shown read-only.
+Password change requires typing my current password first before it lets
+me set a new one. Preferences let me pick my default view (table or board)
+so login takes me straight there, and a theme toggle for light, dark, or
+system. Data section has two export buttons - one for JSON, one for CSV.
+Danger zone has delete all applications (keeps the account) and delete
+account (permanent). Both require typing a specific confirmation phrase
+before the button enables. Deleting the account cascades and removes
+everything.
+
+
+DARK MODE
+---------
+Full dark mode using warm off-white on near-black, not a straight
+inversion. Toggled from Settings and syncs to the database so it follows
+me across devices. System preference is also respected by default.
+
+
+KANBAN COLOUR ACCENTS
+----------------------
+The board is the only view with colour. Each column has a muted hue -
+graphite for Applied, ochre for Interviewing, sage for Offer, rust for
+Rejected. The colour shows up in exactly three places: a 2px left border
+on each card, a small square dot in the column header, and the column
+label text. Everything else on the board stays monochrome. The drag
+overlay goes neutral while a card is being moved to signal it has no
+settled status yet. Empty columns show the hue at low opacity as a
+dashed border. The hues were chosen for editorial neutrality rather than
+standard traffic-light conventions - sage instead of bright green, rust
+instead of red. Both light and dark mode have their own variants so the
+colours feel present in both without looking washed out or oversaturated.
+Table view, analytics, and settings stay pure B&W.
+
+
+KEYBOARD SHORTCUTS
+------------------
+Cmd+K or just pressing N anywhere opens the new application dialog.
+Works from the table, board, analytics, and settings views.
+
+
+DESIGN
+------
+Black and white, Courier Prime typewriter font, hairline borders.
+Keeps it minimal. Works on mobile too - the kanban columns stack
+vertically and the analytics stats go to a 2x2 grid.
+
+
+SECURITY
+--------
+Row Level Security is on so the database enforces that users only see
+their own data. All database writes go through server actions. Analytics
+functions use security invoker so RLS applies at the function level.
+The profile trigger uses security definer because it runs during signup
+before the user is authenticated. Account deletion uses a separate admin
+client with the service role key, kept server-side only. Credentials are
+in .env.local which is gitignored.
+
+All server actions validate input with Zod before touching the database.
+URL fields reject javascript: pseudo-URLs which would otherwise be an
+XSS vector on the open job listing button. Rate limiting is in place on
+auth endpoints (by IP), mutations (by user ID), and expensive operations
+like export and account deletion (by user ID). Auth and mutations use
+different identifiers on purpose - IP-only limiting can be bypassed by
+one user and accidentally block others on the same network.
+
+Security headers are set on every route - X-Frame-Options to block
+clickjacking, HSTS to enforce HTTPS, CSP in report-only mode, and
+Referrer-Policy to stop referrers leaking to third parties. The admin
+client module uses server-only so the build fails if it ever gets
+imported into a client component. Ran gitleaks before deploying - no
+secrets in the codebase or git history. Custom 404 and error pages match
+the app aesthetic instead of exposing the default Next.js ones. Robots
+disallowed so the login page doesn't appear in search results.
+
+
+AI JOB PARSER  (new application dialog)
+-----------------------------------------
+QUICK FILL row at the top of the new application dialog. Paste a
+Greenhouse, Lever, or any structured job URL and hit Extract - the
+form pre-fills company, role, location, salary range, and job URL
+automatically. User can edit any field before saving.
+
+Two extraction paths: for Greenhouse and Lever URLs, fields are pulled
+directly from the page HTML via CSS selectors - no model needed. For
+everything else, the page text is sent to a fine-tuned DistilBERT NER
+model hosted on Modal that identifies company, role, location, salary,
+and employment type as named entities. The toast message tells you which
+path was used - "Extracted from structured data" vs "Extracted via ML
+model". Rate limited at 5 requests per minute per user.
+
+The model was trained on 800 synthetic job postings generated via Claude
+(field values controlled at generation time so labels were known) plus
+72 hand-scraped real Greenhouse postings as a validation set. BIO tagging
+format with 11 label classes. DistilBERT fine-tuned for 5 epochs,
+deployed as a scale-to-zero FastAPI endpoint on Modal.
+
+Explicitly unsupported: LinkedIn, Indeed, Workday (JS-rendered or
+actively blocks scrapers). These return a clear error message.
+
+
