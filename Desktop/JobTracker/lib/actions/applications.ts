@@ -2,7 +2,6 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import { applicationSchema } from '@/lib/schemas';
 import { mutationLimiter, checkRateLimit } from '@/lib/rate-limit';
 import type { ApplicationStatus } from '@/lib/types';
@@ -10,7 +9,7 @@ import type { ApplicationStatus } from '@/lib/types';
 export async function createApplication(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/auth/login');
+  if (!user) return { error: 'Not authenticated' };
 
   const rl = await checkRateLimit(mutationLimiter, user.id);
   if (!rl.ok) return { error: rl.error };
@@ -33,6 +32,7 @@ export async function createApplication(formData: FormData) {
 
   const { error } = await supabase.from('applications').insert({
     ...parsed.data,
+    user_id: user.id,
     location: parsed.data.location || null,
     salary_range: parsed.data.salary_range || null,
     job_url: parsed.data.job_url || null,
