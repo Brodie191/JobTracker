@@ -1,5 +1,6 @@
 import 'server-only';
-import { JSDOM } from 'jsdom';
+
+import { parse } from 'node-html-parser';
 
 export interface ScrapedJob {
   source: 'greenhouse' | 'lever' | 'jsonld' | 'unknown';
@@ -29,13 +30,12 @@ async function fetchHtml(url: string): Promise<string> {
 
 async function scrapeGreenhouse(url: string): Promise<ScrapedJob> {
   const html = await fetchHtml(url);
-  const doc = new JSDOM(html).window.document;
+  const doc = parse(html);
   return {
     source: 'greenhouse',
     url,
     role: doc.querySelector('.app-title')?.textContent?.trim(),
-    company: doc.querySelector('.company-name')?.textContent?.trim()
-      .replace(/^at\s+/i, ''),
+    company: doc.querySelector('.company-name')?.textContent?.trim().replace(/^at\s+/i, ''),
     location: doc.querySelector('.location')?.textContent?.trim(),
     text: doc.querySelector('#content')?.textContent?.trim() ?? '',
   };
@@ -43,7 +43,7 @@ async function scrapeGreenhouse(url: string): Promise<ScrapedJob> {
 
 async function scrapeLever(url: string): Promise<ScrapedJob> {
   const html = await fetchHtml(url);
-  const doc = new JSDOM(html).window.document;
+  const doc = parse(html);
   const logoAlt = doc.querySelector('a.main-header-logo img')?.getAttribute('alt');
   const company = logoAlt
     ? logoAlt.replace(/\s*logo$/i, '').trim()
@@ -60,10 +60,10 @@ async function scrapeLever(url: string): Promise<ScrapedJob> {
 
 async function scrapeJsonLd(url: string): Promise<ScrapedJob> {
   const html = await fetchHtml(url);
-  const doc = new JSDOM(html).window.document;
+  const doc = parse(html);
   const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
 
-  for (const script of Array.from(scripts)) {
+  for (const script of scripts) {
     try {
       const data = JSON.parse(script.textContent ?? '');
       const blocks = Array.isArray(data) ? data : [data];
@@ -89,12 +89,12 @@ async function scrapeJsonLd(url: string): Promise<ScrapedJob> {
   return {
     source: 'unknown',
     url,
-    text: doc.body.textContent?.trim() ?? '',
+    text: doc.querySelector('body')?.textContent?.trim() ?? '',
   };
 }
 
 function stripHtml(html: string): string {
-  return new JSDOM(html).window.document.body.textContent?.trim() ?? '';
+  return parse(html).textContent?.trim() ?? '';
 }
 
 export async function callExtractionEndpoint(text: string) {
