@@ -1,7 +1,5 @@
 """
 Convert synthetic.jsonl + validation.jsonl to BIO-labeled format for training.
-Run: python ml/label_data.py
-Requires: pip install transformers
 """
 
 import json

@@ -1,7 +1,5 @@
 """
 Interactive labeling helper for validation set.
-Pre-scrape URLs first, save text to ml/data/scraped_for_labeling.jsonl,
-then run: python ml/label_validation.py
 """
 
 import json

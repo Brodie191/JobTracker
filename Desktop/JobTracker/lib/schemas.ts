@@ -6,7 +6,13 @@ export const applicationSchema = z.object({
   status: z.enum(['applied', 'interviewing', 'offer', 'rejected']),
   location: z.string().trim().max(120).optional().or(z.literal('')),
   salary_range: z.string().trim().max(60).optional().or(z.literal('')),
-  job_url: z.string().trim().url('Must be a valid URL').max(2000).optional().or(z.literal('')),
+  job_url: z
+    .string()
+    .trim()
+    .max(2000)
+    .refine((v) => !v || /^https?:\/\//i.test(v), 'Must be an http or https URL')
+    .optional()
+    .or(z.literal('')),
   notes: z.string().trim().max(5000).optional().or(z.literal('')),
   applied_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date'),
 });

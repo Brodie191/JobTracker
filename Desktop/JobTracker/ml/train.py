@@ -1,12 +1,6 @@
 """
 Fine-tune DistilBERT for job posting NER.
 Run locally (Apple Silicon MPS) or in Google Colab.
-
-Setup:
-  pip install transformers datasets evaluate seqeval torch accelerate
-
-Usage:
-  KMP_DUPLICATE_LIB_OK=TRUE python ml/train.py
 """
 
 import os

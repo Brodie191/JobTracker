@@ -44,13 +44,17 @@ async function scrapeGreenhouse(url: string): Promise<ScrapedJob> {
 async function scrapeLever(url: string): Promise<ScrapedJob> {
   const html = await fetchHtml(url);
   const doc = new JSDOM(html).window.document;
+  const logoAlt = doc.querySelector('a.main-header-logo img')?.getAttribute('alt');
+  const company = logoAlt
+    ? logoAlt.replace(/\s*logo$/i, '').trim()
+    : new URL(url).pathname.split('/')[1];
   return {
     source: 'lever',
     url,
     role: doc.querySelector('.posting-headline h2')?.textContent?.trim(),
-    company: doc.querySelector('.main-header-text a')?.textContent?.trim(),
+    company,
     location: doc.querySelector('.posting-categories .location')?.textContent?.trim(),
-    text: doc.querySelector('.section-wrapper.page-full-width')?.textContent?.trim() ?? '',
+    text: doc.querySelector('[data-qa="job-description"]')?.textContent?.trim() ?? '',
   };
 }
 

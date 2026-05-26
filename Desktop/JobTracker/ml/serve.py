@@ -1,20 +1,9 @@
 """
 Modal deployment for the job posting NER model.
 
-Setup:
-  pip install modal
-  modal token new
 
 Load model into volume (run once after training):
   modal volume put job-model ./ml/model_final /job-posting-ner
-
-Deploy:
-  modal deploy ml/serve.py
-
-Test:
-  curl -X POST https://YOUR-URL.modal.run \
-    -H "Content-Type: application/json" \
-    -d '{"text": "We are hiring a Senior Software Engineer at Stripe in San Francisco..."}'
 """
 
 import modal

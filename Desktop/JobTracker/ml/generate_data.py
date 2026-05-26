@@ -1,7 +1,5 @@
 """
 Generate 800 synthetic job posting examples via Claude.
-Run: python ml/generate_data.py
-Requires: ANTHROPIC_API_KEY in environment.
 """
 
 import anthropic

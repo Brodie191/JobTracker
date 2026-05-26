@@ -30,10 +30,29 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+SpecSheets/
+
 # env files (can opt-in for committing if needed)
 .env*.local
 .env
 .env.production
+.env.test
+
+# supabase cli
+supabase/.branches/
+supabase/.temp/
+
+# ml model weights (too large for github)
+ml/model_final/
+model_final.zip
+
+# python
+ml/__pycache__/
+*.pyc
+
+# playwright
+playwright-report/
+test-results/
 
 # vercel
 .vercel
