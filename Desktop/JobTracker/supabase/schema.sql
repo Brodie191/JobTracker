@@ -81,6 +81,7 @@ create trigger set_profiles_updated_at
   for each row execute procedure public.set_updated_at();
 
 -- Analytics view
+drop view if exists public.application_stats;
 create or replace view public.application_stats
 with (security_invoker = true) as
 select
