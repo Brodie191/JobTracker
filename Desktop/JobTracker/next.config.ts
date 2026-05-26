@@ -23,6 +23,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['jsdom'],
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }];
   },
