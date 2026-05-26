@@ -3,18 +3,17 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
 function makeRatelimit(prefix: string, limit: number, window: string) {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    return null;
-  }
+  const url = (process.env.UPSTASH_REDIS_REST_URL ?? '').replace(/^["']+|["']+$/g, '');
+  const token = (process.env.UPSTASH_REDIS_REST_TOKEN ?? '').replace(/^["']+|["']+$/g, '');
+  if (!url.startsWith('https://') || !token) return null;
   try {
     return new Ratelimit({
-      redis: Redis.fromEnv(),
+      redis: new Redis({ url, token }),
       limiter: Ratelimit.slidingWindow(limit, window as Parameters<typeof Ratelimit.slidingWindow>[1]),
       analytics: true,
       prefix,
     });
-  } catch (e) {
-    console.error('[makeRatelimit] Invalid Upstash config, rate limiting disabled:', e);
+  } catch {
     return null;
   }
 }
