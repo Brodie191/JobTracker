@@ -60,7 +60,11 @@ export function PreferencesForm({ defaultView, theme: dbTheme }: PreferencesForm
   const handleTheme = (value: string) => {
     setTheme(value);
     startTransition(async () => {
-      await updatePreference('theme', value as 'light' | 'dark' | 'system');
+      try {
+        await updatePreference('theme', value as 'light' | 'dark' | 'system');
+      } catch {
+        // theme is applied locally regardless of DB save
+      }
     });
   };
 
@@ -77,7 +81,6 @@ export function PreferencesForm({ defaultView, theme: dbTheme }: PreferencesForm
         options={[
           { value: 'light', label: 'Light' },
           { value: 'dark', label: 'Dark' },
-          { value: 'system', label: 'System' },
         ]}
         value={theme ?? dbTheme}
         onChange={handleTheme}
