@@ -28,10 +28,14 @@ export async function checkRateLimit(
   identifier: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!limiter) return { ok: true };
-  const { success, reset } = await limiter.limit(identifier);
-  if (!success) {
-    const seconds = Math.ceil((reset - Date.now()) / 1000);
-    return { ok: false, error: `Too many attempts. Try again in ${seconds}s.` };
+  try {
+    const { success, reset } = await limiter.limit(identifier);
+    if (!success) {
+      const seconds = Math.ceil((reset - Date.now()) / 1000);
+      return { ok: false, error: `Too many attempts. Try again in ${seconds}s.` };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: true };
   }
-  return { ok: true };
 }
