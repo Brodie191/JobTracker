@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useEffect, useTransition } from 'react';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { updatePreference } from '@/lib/actions/profile';
@@ -39,9 +39,15 @@ function RadioGroup({ label, options, value, onChange }: RadioGroupProps) {
   );
 }
 
-export function PreferencesForm({ defaultView, theme }: PreferencesFormProps) {
-  const { setTheme } = useTheme();
+export function PreferencesForm({ defaultView, theme: dbTheme }: PreferencesFormProps) {
+  const { theme, setTheme } = useTheme();
   const [, startTransition] = useTransition();
+
+  // Sync DB value into next-themes on first mount
+  useEffect(() => {
+    setTheme(dbTheme);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleView = (value: string) => {
     startTransition(async () => {
@@ -73,7 +79,7 @@ export function PreferencesForm({ defaultView, theme }: PreferencesFormProps) {
           { value: 'dark', label: 'Dark' },
           { value: 'system', label: 'System' },
         ]}
-        value={theme}
+        value={theme ?? dbTheme}
         onChange={handleTheme}
       />
     </div>
