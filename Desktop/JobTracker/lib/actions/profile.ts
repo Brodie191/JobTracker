@@ -7,15 +7,8 @@ import { profileSchema, passwordSchema } from '@/lib/schemas';
 import { authLimiter, mutationLimiter, checkRateLimit } from '@/lib/rate-limit';
 
 export async function updateProfile(formData: FormData) {
-  let supabase;
-  try {
-    supabase = await createClient();
-  } catch (e) {
-    console.error('[updateProfile] createClient failed:', e);
-    return { error: 'Server configuration error' };
-  }
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError) console.error('[updateProfile] getUser error:', authError);
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not authenticated' };
 
   const rl = await checkRateLimit(mutationLimiter, user.id);
@@ -31,10 +24,7 @@ export async function updateProfile(formData: FormData) {
     .update({ display_name: parsed.data.display_name || null })
     .eq('id', user.id);
 
-  if (error) {
-    console.error('[updateProfile] update error:', error);
-    return { error: error.message };
-  }
+  if (error) return { error: error.message };
   revalidatePath('/settings');
   return { success: true };
 }
