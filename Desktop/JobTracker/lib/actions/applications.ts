@@ -8,8 +8,15 @@ import { mutationLimiter, checkRateLimit } from '@/lib/rate-limit';
 import type { ApplicationStatus } from '@/lib/types';
 
 export async function createApplication(formData: FormData) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch (e) {
+    console.error('[createApplication] createClient failed:', e);
+    return { error: 'Server configuration error' };
+  }
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) console.error('[createApplication] getUser error:', authError);
   if (!user) redirect('/auth/login');
 
   const rl = await checkRateLimit(mutationLimiter, user.id);
@@ -40,7 +47,10 @@ export async function createApplication(formData: FormData) {
     position: nextPosition,
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error('[createApplication] insert error:', error);
+    return { error: error.message };
+  }
   revalidatePath('/applications');
   revalidatePath('/board');
   return { success: true };
