@@ -6,12 +6,17 @@ function makeRatelimit(prefix: string, limit: number, window: string) {
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
     return null;
   }
-  return new Ratelimit({
-    redis: Redis.fromEnv(),
-    limiter: Ratelimit.slidingWindow(limit, window as Parameters<typeof Ratelimit.slidingWindow>[1]),
-    analytics: true,
-    prefix,
-  });
+  try {
+    return new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(limit, window as Parameters<typeof Ratelimit.slidingWindow>[1]),
+      analytics: true,
+      prefix,
+    });
+  } catch (e) {
+    console.error('[makeRatelimit] Invalid Upstash config, rate limiting disabled:', e);
+    return null;
+  }
 }
 
 // Auth endpoints — limited by IP (user not yet known)
