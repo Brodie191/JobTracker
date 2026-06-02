@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Courier_Prime } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
+import { CookieBanner } from '@/components/cookie-banner';
 import { Providers } from './providers';
 import './globals.css';
 
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           {children}
           <Toaster />
+          <CookieBanner />
         </Providers>
       </body>
     </html>
