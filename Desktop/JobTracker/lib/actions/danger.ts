@@ -5,11 +5,13 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { expensiveLimiter, checkRateLimit } from '@/lib/rate-limit';
+import { isDemoSession, DEMO_BLOCKED } from '@/lib/demo';
 
 export async function deleteAllApplications() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not authenticated' };
+  if (isDemoSession(user)) return { error: DEMO_BLOCKED };
 
   const rl = await checkRateLimit(expensiveLimiter, user.id);
   if (!rl.ok) return { error: rl.error };
@@ -34,6 +36,7 @@ export async function deleteAccount(confirmText: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not authenticated' };
+  if (isDemoSession(user)) return { error: DEMO_BLOCKED };
 
   const rl = await checkRateLimit(expensiveLimiter, user.id);
   if (!rl.ok) return { error: rl.error };

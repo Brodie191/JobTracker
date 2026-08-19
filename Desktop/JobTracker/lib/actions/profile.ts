@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { profileSchema, passwordSchema } from '@/lib/schemas';
 import { authLimiter, mutationLimiter, checkRateLimit } from '@/lib/rate-limit';
+import { isDemoSession, DEMO_BLOCKED } from '@/lib/demo';
 
 export async function updateProfile(formData: FormData) {
   const supabase = await createClient();
@@ -42,6 +43,8 @@ export async function updatePassword(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return { error: 'Not authenticated' };
+  // A password change on the shared demo account would break the /demo link.
+  if (isDemoSession(user)) return { error: DEMO_BLOCKED };
 
   const { error: signInError } = await supabase.auth.signInWithPassword({
     email: user.email,
